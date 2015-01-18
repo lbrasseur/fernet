@@ -1,7 +1,9 @@
-package com.fernet;
+package com.fernet.guice;
 
 import static java.util.Objects.requireNonNull;
 
+import com.fernet.MethodResolver;
+import com.fernet.RestFilter;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.servlet.ServletModule;
