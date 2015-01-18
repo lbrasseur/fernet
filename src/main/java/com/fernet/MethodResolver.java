@@ -3,6 +3,7 @@ package com.fernet;
 import static java.util.Objects.requireNonNull;
 
 import java.lang.reflect.Method;
+import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -15,6 +16,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
@@ -27,12 +29,9 @@ class MethodResolver {
 		for (Class<?> serviceClass : serviceClasses) {
 			for (Method method : serviceClass.getMethods()) {
 				Path path = method.getAnnotation(Path.class);
-				Object httpMethod = firstNonNull(
-						method.getAnnotation(GET.class),
-						method.getAnnotation(POST.class),
-						method.getAnnotation(PUT.class),
-						method.getAnnotation(DELETE.class),
-						method.getAnnotation(HEAD.class));
+				Annotation httpMethod = firstAnnotation(method,
+						ImmutableList.of(GET.class, POST.class, PUT.class,
+								DELETE.class, HEAD.class));
 				if (path != null && httpMethod != null) {
 					pathToMethod.add(new MethodDefinition(method, HttpMethod
 							.fromAnnotation(httpMethod), Pattern
@@ -61,10 +60,12 @@ class MethodResolver {
 		return path.replaceAll("\\{.*?\\}", "(.*?)");
 	}
 
-	private Object firstNonNull(Object... values) {
-		for (Object value : values) {
-			if (value != null) {
-				return value;
+	private Annotation firstAnnotation(Method method,
+			Iterable<Class<? extends Annotation>> annotationClasses) {
+		for (Class<? extends Annotation> annotationClass : annotationClasses) {
+			Annotation annotation = method.getAnnotation(annotationClass);
+			if (annotation != null) {
+				return annotation;
 			}
 		}
 		return null;

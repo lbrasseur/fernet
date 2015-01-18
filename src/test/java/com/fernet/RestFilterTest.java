@@ -7,14 +7,14 @@ import junit.framework.TestSuite;
 /**
  * Unit test for {@link RestFilter}.
  */
-public class RestServletTest extends TestCase {
+public class RestFilterTest extends TestCase {
 	/**
 	 * Create the test case
 	 *
 	 * @param testName
 	 *            name of the test case
 	 */
-	public RestServletTest(String testName) {
+	public RestFilterTest(String testName) {
 		super(testName);
 	}
 
@@ -22,7 +22,7 @@ public class RestServletTest extends TestCase {
 	 * @return the suite of tests being tested
 	 */
 	public static Test suite() {
-		return new TestSuite(RestServletTest.class);
+		return new TestSuite(RestFilterTest.class);
 	}
 
 	/**

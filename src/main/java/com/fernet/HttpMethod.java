@@ -1,5 +1,7 @@
 package com.fernet;
 
+import java.lang.annotation.Annotation;
+
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
@@ -9,7 +11,7 @@ import javax.ws.rs.PUT;
 public enum HttpMethod {
 	GET, POST, PUT, DELETE, HEAD;
 
-	static HttpMethod fromAnnotation(Object annotation) {
+	static HttpMethod fromAnnotation(Annotation annotation) {
 		if (annotation instanceof GET) {
 			return GET;
 		} else if (annotation instanceof POST) {
