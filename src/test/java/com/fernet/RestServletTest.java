@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 /**
- * Unit test for {@link RestServlet}.
+ * Unit test for {@link RestFilter}.
  */
 public class RestServletTest extends TestCase {
 	/**
