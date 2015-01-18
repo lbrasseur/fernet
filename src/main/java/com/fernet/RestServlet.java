@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -15,42 +14,38 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
+import com.google.inject.Injector;
 
-public class RestServlet<T> extends HttpServlet {
-    private final T service;
-    private final Gson gson;
+public class RestServlet extends HttpServlet {
+	private static final long serialVersionUID = 2456676953647740932L;
+	private final Registry registry;
+	private final Injector injector;
+	private final Gson gson;
 
-    @Inject
-    public RestServlet(T service, Gson gson) {
-        this.service = checkNotNull(service);
-        this.gson = checkNotNull(gson);
-    }
+	@Inject
+	public RestServlet(Registry registry, Injector injector, Gson gson) {
+		this.registry = checkNotNull(registry);
+		this.injector = checkNotNull(injector);
+		this.gson = checkNotNull(gson);
+	}
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        final String methodName = req.getRequestURI().substring(
-                req.getRequestURI().lastIndexOf('/') + 1);
-        Method method = Iterables.find(
-                Arrays.asList(service.getClass().getMethods()),
-                new Predicate<Method>() {
-                    @Override
-                    public boolean apply(Method method) {
-                        return method.getName().equals(methodName);
-                    }
-                });
-        try (Reader contentReader = new InputStreamReader(req.getInputStream())) {
-            Object requestDto = gson.fromJson(contentReader,
-                    method.getParameterTypes()[0]);
-            Object responseDto = method.invoke(service, requestDto);
-            resp.getWriter().write(gson.toJson(responseDto));
-        } catch (IllegalAccessException | IllegalArgumentException
-                | InvocationTargetException e) {
-            Throwables.propagate(e);
-        }
-    }
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		String path = req.getRequestURI().substring(req.getContextPath().length());
+		Method method = registry.getMethodForPath(path);
+		Object service = injector.getInstance(method.getDeclaringClass());
+		
+		try (Reader contentReader = new InputStreamReader(req.getInputStream())) {
+			Object requestDto = gson.fromJson(contentReader,
+					method.getParameterTypes()[0]);
+			Object responseDto = method.invoke(service, requestDto);
+			resp.getWriter().write(gson.toJson(responseDto));
+		} catch (IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException e) {
+			Throwables.propagate(e);
+		}
+	}
 }
