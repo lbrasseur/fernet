@@ -56,6 +56,7 @@ public class RestFilter implements Filter {
 					return;
 				}
 
+				// TODO: How to manage @Consumes annotation? can we just ignore it?
 				String body = CharStreams.toString(new InputStreamReader(req
 						.getInputStream()));
 				String[] stringArgs = methodResolver.resolveParameters(method,
@@ -74,6 +75,7 @@ public class RestFilter implements Filter {
 						.getDeclaringClass());
 				Object response = method.invoke(service, args);
 
+				// TODO: How to manage @Produces annotation? can we just ignore it?
 				resp.getWriter().write(serializer.toString(response));
 			} else {
 				filterChain.doFilter(servletRequest, servletResponse);
