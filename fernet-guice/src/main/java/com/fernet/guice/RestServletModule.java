@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.fernet.MethodResolver;
 import com.fernet.RestFilter;
+import com.fernet.ServiceProvider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.servlet.ServletModule;
@@ -19,6 +20,7 @@ public class RestServletModule extends ServletModule {
 	protected void configureServlets() {
 		filter("*").through(RestFilter.class);
 		bind(RestFilter.class).in(Singleton.class);
+		bind(ServiceProvider.class).to(InjectorServiceProvider.class);
 	}
 
 	@Provides

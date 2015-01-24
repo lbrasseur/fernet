@@ -19,18 +19,18 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.gson.Gson;
-import com.google.inject.Injector;
 
 public class RestFilter implements Filter {
 	private final MethodResolver methodResolver;
-	private final Injector injector;
+	private final ServiceProvider serviceProvider;
 	private final Gson gson;
 
 	@Inject
-	public RestFilter(MethodResolver methodResolver, Injector injector,
+	public RestFilter(MethodResolver methodResolver,
+			ServiceProvider serviceProvider,
 			Gson gson) {
 		this.methodResolver = checkNotNull(methodResolver);
-		this.injector = checkNotNull(injector);
+		this.serviceProvider = checkNotNull(serviceProvider);
 		this.gson = checkNotNull(gson);
 	}
 
@@ -47,7 +47,7 @@ public class RestFilter implements Filter {
 
 		Method method = methodResolver.resolveMethod(httpMethod, path);
 		if (method != null) {
-			Object service = injector.getInstance(method.getDeclaringClass());
+			Object service = serviceProvider.getService(method.getDeclaringClass());
 
 			try (Reader contentReader = new InputStreamReader(
 					req.getInputStream())) {
