@@ -13,6 +13,7 @@ hs_err_pid*
 .settings
 .project
 .classpath
+META-INF
 
 # Maven files
 target
