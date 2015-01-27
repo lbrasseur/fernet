@@ -61,10 +61,10 @@ public class RestFilter implements Filter {
 						.getInputStream()));
 				String[] stringArgs = methodResolver.resolveParameters(method,
 						path, req.getParameterMap(), body);
-				checkState(stringArgs.length == method.getParameterCount(),
+				checkState(stringArgs.length == method.getParameterTypes().length,
 						String.format(
 								"Resolved argument count does not match: %s. Expected: %s",
-								stringArgs.length, method.getParameterCount()));
+								stringArgs.length, method.getParameterTypes().length));
 				Object[] args = new Object[stringArgs.length];
 				for (int n = 0; n < stringArgs.length; n++) {
 					args[n] = serializer.fromString(stringArgs[n],

@@ -1,9 +1,8 @@
 package com.fernet.gson;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
-import java.text.DateFormat;
-import java.text.ParseException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
 import javax.inject.Inject;
@@ -17,43 +16,39 @@ public class GsonSerializer implements Serializer {
 
 	@Inject
 	public GsonSerializer(Gson gson) {
-		this.gson = checkNotNull(gson);
+		this.gson = requireNonNull(gson);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T fromString(String data, Class<T> type) {
+		requireNonNull(data);
+		requireNonNull(type);
 		try {
-			// TODO: Primitive parsing should match gson format.
-			// Also, primitive list is incomplete.
-			if (String.class.isAssignableFrom(type)) {
-				return (T) data;
-			} else if (Boolean.class.isAssignableFrom(type)) {
-				return (T) Boolean.valueOf(data);
-			} else if (Date.class.isAssignableFrom(type)) {
-				return (T) DateFormat.getDateInstance().parse(data);
-			} else if (Integer.class.isAssignableFrom(type)) {
-				return (T) Integer.valueOf(data);
-			} else if (Double.class.isAssignableFrom(type)) {
-				return (T) Double.valueOf(data);
+			if (isPrimitive(type)) {
+				return type.getConstructor(String.class).newInstance(data);
 			} else {
 				return gson.fromJson(data, type);
 			}
-		} catch (ParseException e) {
+		} catch (InstantiationException | IllegalAccessException
+				| IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
 			throw Throwables.propagate(e);
 		}
 	}
-
 	@Override
 	public String toString(Object data) {
-		// TODO: Primitive parsing should match gson format.
-		// Also, primitive list is incomplete.
-		if (data instanceof String || data instanceof Boolean
-				|| data instanceof Date || data instanceof Integer
-				|| data instanceof Double) {
+		requireNonNull(data);
+		if (isPrimitive(data.getClass())) {
 			return data.toString();
 		} else {
 			return gson.toJson(data);
 		}
+	}
+	private boolean isPrimitive(Class<?> type) {
+		return String.class.isAssignableFrom(type)
+				|| Boolean.class.isAssignableFrom(type)
+				|| Date.class.isAssignableFrom(type)
+				|| Number.class.isAssignableFrom(type)
+				|| Double.class.isAssignableFrom(type);
 	}
 }
