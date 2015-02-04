@@ -21,5 +21,10 @@
 			<artifactId>guice-servlet</artifactId>
 			<version>3.0</version>
 		</dependency>
+		<dependency>
+			<groupId>com.google.inject.extensions</groupId>
+			<artifactId>guice-multibindings</artifactId>
+			<version>3.0</version>
+		</dependency>
 	</dependencies>
 </project>

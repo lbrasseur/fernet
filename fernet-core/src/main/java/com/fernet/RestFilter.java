@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -25,17 +26,17 @@ import com.google.common.io.CharStreams;
 public class RestFilter implements Filter {
 	private final MethodResolver methodResolver;
 	private final ServiceProvider serviceProvider;
-	private final Serializer serializer;
+	private final Map<String, Serializer> serializers;
 	private final Authorizer authorizer;
 
 	@Inject
 	public RestFilter(MethodResolver methodResolver,
 			ServiceProvider serviceProvider,
-			Serializer serializer,
+			Map<String, Serializer> serializers,
 			@Nullable Authorizer authorizer) {
 		this.methodResolver = requireNonNull(methodResolver);
 		this.serviceProvider = requireNonNull(serviceProvider);
-		this.serializer = requireNonNull(serializer);
+		this.serializers = requireNonNull(serializers);
 		this.authorizer = authorizer;
 	}
 
@@ -44,7 +45,7 @@ public class RestFilter implements Filter {
 			ServletResponse servletResponse, FilterChain filterChain)
 			throws IOException, ServletException {
 		try {
-			final HttpServletRequest req = (HttpServletRequest) servletRequest;
+			HttpServletRequest req = (HttpServletRequest) servletRequest;
 			HttpServletResponse resp = (HttpServletResponse) servletResponse;
 
 			HttpMethod httpMethod = HttpMethod.valueOf(req.getMethod());
@@ -58,27 +59,13 @@ public class RestFilter implements Filter {
 					return;
 				}
 
-				// TODO: How to manage @Consumes annotation? can we just ignore it?
-				String body = CharStreams.toString(new InputStreamReader(req
-						.getInputStream()));
-				String[] stringArgs = methodResolver.resolveParameters(method,
-						path, req.getParameterMap(), body);
-				checkState(stringArgs.length == method.getParameterTypes().length,
-						String.format(
-								"Resolved argument count does not match: %s. Expected: %s",
-								stringArgs.length, method.getParameterTypes().length));
-				Object[] args = new Object[stringArgs.length];
-				for (int n = 0; n < stringArgs.length; n++) {
-					args[n] = serializer.fromString(stringArgs[n],
-							method.getParameterTypes()[n]);
-				}
+				Object[] args = parseStringArgs(
+						getStringArgs(req, path, method), req, httpMethod,
+						method);
 
-				Object service = serviceProvider.getService(method
-						.getDeclaringClass());
-				Object response = method.invoke(service, args);
+				Object response = execute(method, args);
 
-				// TODO: How to manage @Produces annotation? can we just ignore it?
-				resp.getWriter().write(serializer.toString(response));
+				writeResponse(response, req, httpMethod, resp);
 			} else {
 				filterChain.doFilter(servletRequest, servletResponse);
 			}
@@ -87,7 +74,54 @@ public class RestFilter implements Filter {
 			throw new ServletException(e);
 		}
 	}
+	
+	private String[] getStringArgs(HttpServletRequest req, String path,
+			Method method) throws IOException {
+		String body = CharStreams.toString(new InputStreamReader(req
+				.getInputStream()));
+		String[] stringArgs = methodResolver.resolveParameters(method, path,
+				req.getParameterMap(), body);
+		checkState(
+				stringArgs.length == method.getParameterTypes().length,
+				String.format(
+						"Resolved argument count does not match: %s. Expected: %s",
+						stringArgs.length, method.getParameterTypes().length));
+		return stringArgs;
+	}
 
+	private Object[] parseStringArgs(String[] stringArgs,
+			HttpServletRequest req, HttpMethod httpMethod, Method method) {
+		String mimeType = methodResolver
+				.resolveRequestMimeType(httpMethod, req);
+		Serializer serializer = serializers.get(mimeType);
+		checkState(serializer != null, String.format(
+				"Request serializer for MIME type %s not found.", mimeType));
+		Object[] args = new Object[stringArgs.length];
+		for (int n = 0; n < stringArgs.length; n++) {
+			args[n] = serializer.fromString(stringArgs[n],
+					method.getParameterTypes()[n]);
+		}
+		return args;
+	}
+	
+	private Object execute(Method method, Object[] args)
+			throws IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException {
+		return method.invoke(
+				serviceProvider.getService(method.getDeclaringClass()), args);
+	}
+
+	private void writeResponse(Object response, HttpServletRequest req,
+			HttpMethod httpMethod, HttpServletResponse resp) throws IOException {
+		String mimeType = methodResolver
+				.resolveRequestMimeType(httpMethod, req);
+		Serializer serializer = serializers.get(mimeType);
+		checkState(serializer != null, String.format(
+				"Response serializer for MIME type %s not found.", mimeType));
+		resp.setContentType(mimeType);
+		resp.getWriter().write(serializer.toString(response));
+	}
+	
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
 	}

@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -109,6 +110,27 @@ public class JaxRsMethodResolver implements MethodResolver {
 			}
 		}
 		return values;
+	}
+
+	@Override
+	public String resolveRequestMimeType(HttpMethod httpMethod,
+			HttpServletRequest request) {
+		// TODO Read @Consumes annotation
+		// Set a parameter for default mime type
+		return parseMimeType(request.getContentType());
+	}
+
+	@Override
+	public String resolveResponseMimeType(HttpMethod httpMethod,
+			HttpServletRequest request) {
+		// TODO Read @Produces annotation
+		// Set a parameter for default mime type
+		return parseMimeType(request.getHeader("Accept"));
+	}
+	
+	private String parseMimeType(String contentType) {
+		int pos = contentType.indexOf(';');
+		return pos == 0 ? contentType : contentType.substring(0, pos).trim();
 	}
 
 	@SuppressWarnings("unchecked")

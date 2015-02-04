@@ -11,6 +11,7 @@ import com.fernet.gson.GsonSerializer;
 import com.fernet.jaxrs.JaxRsMethodResolver;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.servlet.ServletModule;
 import com.google.inject.util.Providers;
 
@@ -27,7 +28,10 @@ public class RestServletModule extends ServletModule {
 		bind(RestFilter.class).in(Singleton.class);
 		bind(ServiceProvider.class).to(InjectorServiceProvider.class);
 		bind(Serializer.class).to(GsonSerializer.class);
-		bind(Authorizer.class).toProvider(Providers.<Authorizer>of(null));
+		bind(Authorizer.class).toProvider(Providers.<Authorizer> of(null));
+		MapBinder<String, Serializer> mapbinder = MapBinder.newMapBinder(
+				binder(), String.class, Serializer.class);
+		mapbinder.addBinding("application/json").to(GsonSerializer.class);
 	}
 
 	@Provides
