@@ -11,9 +11,9 @@ public interface MethodResolver {
 	String[] resolveParameters(Method method, String path,
 			Map<String, String[]> reqParams, String body);
 
-	String resolveRequestMimeType(HttpMethod httpMethod,
+	String resolveRequestMimeType(Method method,
 			HttpServletRequest request);
 
-	String resolveResponseMimeType(HttpMethod httpMethod,
+	String resolveResponseMimeType(Method method,
 			HttpServletRequest request);
 }

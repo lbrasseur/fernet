@@ -113,7 +113,7 @@ public class JaxRsMethodResolver implements MethodResolver {
 	}
 
 	@Override
-	public String resolveRequestMimeType(HttpMethod httpMethod,
+	public String resolveRequestMimeType(Method method,
 			HttpServletRequest request) {
 		// TODO Read @Consumes annotation
 		// Set a parameter for default mime type
@@ -121,13 +121,13 @@ public class JaxRsMethodResolver implements MethodResolver {
 	}
 
 	@Override
-	public String resolveResponseMimeType(HttpMethod httpMethod,
+	public String resolveResponseMimeType(Method method,
 			HttpServletRequest request) {
 		// TODO Read @Produces annotation
 		// Set a parameter for default mime type
 		return parseMimeType(request.getHeader("Accept"));
 	}
-	
+
 	private String parseMimeType(String contentType) {
 		int pos = contentType.indexOf(';');
 		return pos == 0 ? contentType : contentType.substring(0, pos).trim();

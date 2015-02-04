@@ -60,12 +60,11 @@ public class RestFilter implements Filter {
 				}
 
 				Object[] args = parseStringArgs(
-						getStringArgs(req, path, method), req, httpMethod,
-						method);
+						getStringArgs(req, path, method), req, method);
 
 				Object response = execute(method, args);
 
-				writeResponse(response, req, httpMethod, resp);
+				writeResponse(response, method, req, resp);
 			} else {
 				filterChain.doFilter(servletRequest, servletResponse);
 			}
@@ -90,9 +89,9 @@ public class RestFilter implements Filter {
 	}
 
 	private Object[] parseStringArgs(String[] stringArgs,
-			HttpServletRequest req, HttpMethod httpMethod, Method method) {
+			HttpServletRequest req, Method method) {
 		String mimeType = methodResolver
-				.resolveRequestMimeType(httpMethod, req);
+				.resolveRequestMimeType(method, req);
 		Serializer serializer = serializers.get(mimeType);
 		checkState(serializer != null, String.format(
 				"Request serializer for MIME type %s not found.", mimeType));
@@ -111,10 +110,10 @@ public class RestFilter implements Filter {
 				serviceProvider.getService(method.getDeclaringClass()), args);
 	}
 
-	private void writeResponse(Object response, HttpServletRequest req,
-			HttpMethod httpMethod, HttpServletResponse resp) throws IOException {
-		String mimeType = methodResolver
-				.resolveRequestMimeType(httpMethod, req);
+	private void writeResponse(Object response, Method method,
+			HttpServletRequest req, HttpServletResponse resp)
+			throws IOException {
+		String mimeType = methodResolver.resolveRequestMimeType(method, req);
 		Serializer serializer = serializers.get(mimeType);
 		checkState(serializer != null, String.format(
 				"Response serializer for MIME type %s not found.", mimeType));
