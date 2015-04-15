@@ -28,9 +28,12 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
 public class JaxRsMethodResolver implements MethodResolver {
+	private final String defaultContentType;
 	private final Map<Method, MethodDefinition> methodDefinitions;
 
-	public JaxRsMethodResolver(Class<?>... serviceClasses) {
+	public JaxRsMethodResolver(String defaultContentType,
+			Class<?>... serviceClasses) {
+		this.defaultContentType = requireNonNull(defaultContentType);
 		requireNonNull(serviceClasses);
 		methodDefinitions = Maps.newHashMap();
 		for (Class<?> serviceClass : serviceClasses) {
@@ -116,7 +119,6 @@ public class JaxRsMethodResolver implements MethodResolver {
 	public String resolveRequestMimeType(Method method,
 			HttpServletRequest request) {
 		// TODO Read @Consumes annotation
-		// Set a parameter for default mime type
 		return parseMimeType(request.getContentType());
 	}
 
@@ -124,13 +126,17 @@ public class JaxRsMethodResolver implements MethodResolver {
 	public String resolveResponseMimeType(Method method,
 			HttpServletRequest request) {
 		// TODO Read @Produces annotation
-		// Set a parameter for default mime type
 		return parseMimeType(request.getHeader("Accept"));
 	}
 
 	private String parseMimeType(String contentType) {
-		int pos = contentType.indexOf(';');
-		return pos == 0 ? contentType : contentType.substring(0, pos).trim();
+		if (contentType != null) {
+			int pos = contentType.indexOf(';');
+			return pos == 0 ? contentType : contentType.substring(0, pos)
+					.trim();
+		} else {
+			return defaultContentType;
+		}
 	}
 
 	@SuppressWarnings("unchecked")

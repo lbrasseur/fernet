@@ -16,9 +16,12 @@ import com.google.inject.servlet.ServletModule;
 import com.google.inject.util.Providers;
 
 public class RestServletModule extends ServletModule {
+	private final String defaultContentType;
 	private Class<?> serviceClasses[];
 
-	public RestServletModule(Class<?>... serviceClasses) {
+	public RestServletModule(String defaultContentType,
+			Class<?>... serviceClasses) {
+		this.defaultContentType = requireNonNull(defaultContentType);
 		this.serviceClasses = requireNonNull(serviceClasses);
 	}
 
@@ -37,6 +40,6 @@ public class RestServletModule extends ServletModule {
 	@Provides
 	@Singleton
 	public MethodResolver getMethodResolver() {
-		return new JaxRsMethodResolver(serviceClasses);
+		return new JaxRsMethodResolver(defaultContentType, serviceClasses);
 	}
 }
